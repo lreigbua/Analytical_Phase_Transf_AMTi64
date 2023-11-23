@@ -1,0 +1,64 @@
+*Heading
+ One Element Test of ABQ_PHASE_TRANS
+**------------------------------------------------
+*NODE, NSET=ALL
+ 1,  0., 0.,  0.
+ 2,  1., 0.,  0.
+ 3,  1., 1.,  0.
+ 4,  0., 1.,  0.
+ 5,  0., 0., 1.
+ 6,  1., 0., 1.
+ 7,  1., 1., 1.
+ 8,  0., 1., 1.
+**------------------------------------------------
+*ELEMENT, TYPE=DC3D8, ELSET=ALL
+ 1, 1, 2, 3, 4, 5, 6, 7, 8
+**------------------------------------------------
+*SOLID SECTION, ELSET=ALL, MATERIAL=ABQ_PHASE_TRANS_TI6AL4V
+**------------------------------------------------
+*PHYSICAL CONSTANTS, ABSOLUTE ZERO=-273.15, UNIVERSAL GAS CONSTANT=8.3144598E3
+*INCLUDE, INPUT = ABQ_phase_trans_types.inp
+*INCLUDE, INPUT = mat_phase_trans_ti64.inp
+**------------------------------------------------
+*INITIAL CONDITION, TYPE=TEMPERATURE
+ All, 26.
+*INITIAL CONDITION, TYPE=SOLUTION
+ All, -1., , , , , , ,
+ , , , , , , , , , , ,
+*INITIAL CONDITION, TYPE=FIELD, VARIABLE=1
+ ALL, -1.
+**------------------------------------------------
+*INCLUDE, INPUT=amp_temp_amprint.inp
+**------------------------------------------------
+*STEP,INC=10000,NAME=Lasering
+*HEAT TRANSFER
+ 0.001,2.023245456, ,
+*BOUNDARY, AMPLITUDE=ASSIGN_LASER
+ ALL, 11, 11, 1.
+**
+*OUTPUT,FIELD, FREQ=1
+*NODE OUTPUT
+ NT
+*ELEMENT OUTPUT
+ TEMP, TEMPR
+*OUTPUT,HISTORY, FREQ=1
+*ELEMENT OUTPUT, ELSET=ALL
+ SDV, TEMPR, TEMP, FV
+*END STEP
+**------------------------------------------------
+*STEP,INC=10000,NAME=HeatTreatment
+*HEAT TRANSFER
+100.,79000., ,
+*BOUNDARY, AMPLITUDE=ASSIGN_HeatTreatment
+ ALL, 11, 11, 1.
+**
+*OUTPUT,FIELD, FREQ=1
+*NODE OUTPUT
+ NT
+*ELEMENT OUTPUT
+ TEMP, TEMPR
+*OUTPUT,HISTORY, FREQ=1
+*ELEMENT OUTPUT, ELSET=ALL
+ SDV, TEMPR, TEMP, FV
+*END STEP
+**------------------------------------------------
