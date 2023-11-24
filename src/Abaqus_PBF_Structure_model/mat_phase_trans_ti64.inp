@@ -69,7 +69,7 @@
  , ,
  "MtoAB", MIN, -15.,      , NONE, ,     , DIFFUSIONAL, JMA, NO,  1, 2, "Alphaprime", , , "Alpha", 
  "Beta", ,
- "BtoA",  MIN, -20.,   , NONE, ,     , DIFFUSIONAL, TTT, YES, 1, 1, "Beta", , , "Alpha",
+ "BtoA",  MIN, -410.,   , NONE, ,     , DIFFUSIONAL, TTT, YES, 1, 1, "Beta", , , "Alpha",
  , ,
 **
 *PROPERTY TABLE, TYPE="ABQ_PHASE_TRANS_Martensitic_KM_Coefficients", LABEL="ABQ_PHASE_TRANS_Trans_BtoM_KM_Coefficients"
