@@ -17,8 +17,8 @@
 *SOLID SECTION, ELSET=ALL, MATERIAL=ABQ_PHASE_TRANS_TI6AL4V
 **------------------------------------------------
 *PHYSICAL CONSTANTS, ABSOLUTE ZERO=-273.15, UNIVERSAL GAS CONSTANT=8.3144598E3
-*INCLUDE, INPUT = ../src/Abaqus_PBF_Structure_model/ABQ_phase_trans_types.inp
-*INCLUDE, INPUT = ../src/Abaqus_PBF_Structure_model/mat_phase_trans_ti64.inp
+*INCLUDE, INPUT = ABQ_phase_trans_types.inp
+*INCLUDE, INPUT = mat_phase_trans_ti64.inp
 **------------------------------------------------
 *INITIAL CONDITION, TYPE=TEMPERATURE
  All, 26.
