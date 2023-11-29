@@ -2,15 +2,18 @@ from pathlib import Path
 import os
 import numpy as np
 import math
+import json
 
-def Run(input_csv, data_folder, output_folder):
+
+
+def Run(input_csv, data_folder, output_json = ""):
 
     print(f'Running Structure Model for {input_csv}...')
 
     # Save paths
     temperature_history_file = Path(input_csv)
     module_path = Path(__file__).parent
-    output_folder_path = Path(output_folder)
+    output_json_path = Path(output_json)
     data_folder_path = Path(data_folder)
     user_folder = Path.cwd()
 
@@ -83,6 +86,7 @@ def Run(input_csv, data_folder, output_folder):
     alpha = np.genfromtxt('alpha.csv', delimiter=',')
     beta = np.genfromtxt('Beta.csv', delimiter=',')
     temp = np.genfromtxt('TEMP.csv', delimiter=',')
+    mart = np.genfromtxt('mart.csv', delimiter=',')
 
     # Calculate lath thickness
     t = temp[:,0]
@@ -116,7 +120,21 @@ def Run(input_csv, data_folder, output_folder):
     t_lath = np.vstack((t, t_lath)).T
     np.savetxt("t_lath.csv", t_lath, delimiter=",")
 
+    
+    os.chdir(user_folder)
 
+    if output_json != "":
+        # Save final microstructure data as dict:
+        data_dict = {}
+        data_dict["alpha"] = alpha[-1]
+        data_dict["beta"] = beta[-1,1]
+        data_dict["mart"] = mart[-1,1]
+        data_dict["t_lath"] = t_lath[-1,1]
+
+        with open(output_json, 'w') as fp:
+            print("HELLLOOOOO!")
+            json.dump(data_dict, fp)
+
+        
 
     print(f'Finished Structure Model!')
-    os.chdir(user_folder)
