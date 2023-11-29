@@ -87,6 +87,7 @@ def Run(input_csv, data_folder, output_folder):
     # Calculate lath thickness
     t = temp[:,0]
     temp = temp[:,1]
+    alpha = alpha[:,1]
     
     k = 1.42
     R=294
@@ -100,17 +101,19 @@ def Run(input_csv, data_folder, output_folder):
     t_lath = np.zeros(len(alpha))
 
     t_lath[0] = t0
-
     for i in range(1, len(alpha)):
 
-        if alpha(i) > 0:
+        if alpha[i] > 0:
             teq = k * math.exp(-R/temp[i]);
             Tavg = (temp[i] + temp[i-1]) / 2;
-            t_lath[i] = ( (t_lath[i-1] - teq) * alpha[i] / alpha[i-1] + teq ) + ( k0*math.exp(-Q/(R*Tavg))* (t[i]-t[i-1]) )
+            t_lath[i] = ( (t_lath[i-1] - teq) * alpha[i-1] / alpha[i] + teq ) + ( k0*math.exp(-Q/(Rg*Tavg))* (t[i]-t[i-1]) )
         
         else:
             t_lath[i] = t0
 
+    
+    # add time and save to csv:
+    t_lath = np.vstack((t, t_lath)).T
     np.savetxt("t_lath.csv", t_lath, delimiter=",")
 
 
