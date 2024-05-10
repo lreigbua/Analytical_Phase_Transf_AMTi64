@@ -8,8 +8,6 @@ import sys
 
 temperature_file = sys.argv[1]
 
-os.chdir('../data')
-
 module_path = Path('../src/Abaqus_PBF_Structure_model')
 
 
