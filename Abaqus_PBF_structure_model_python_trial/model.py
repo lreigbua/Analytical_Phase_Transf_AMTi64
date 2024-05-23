@@ -5,15 +5,46 @@ import math as m
 import sys
 
 # read temperature history:
+# data = np.genfromtxt('../input/amp_temp_amprin_and_HT.csv', delimiter=',')
 # data = np.genfromtxt('../input/Abaqus_one_elem_tests/amp_temp_amprint.txt', delimiter=',')
-data = np.genfromtxt('../input/Abaqus_one_elem_tests/one_elem.csv', delimiter=',')
-t = data[:,0] # time
-T = data[:,1] # temperature
+# data = np.genfromtxt('../input/Abaqus_one_elem_tests/one_elem.csv', delimiter=',')
+# data = np.genfromtxt('../input/cooling.csv', delimiter=',')
+# data = np.genfromtxt('../input/XRD_test.csv', delimiter=',')
+# data = np.genfromtxt('../input/half_hatch_rehatched/Temperature_Element_at_heigt_1.98.csv', delimiter=',')
+# data = np.genfromtxt('../input/output_6_scans_half_power/Temperature_Element_at_heigt_0.06.csv', delimiter=',')
+# data = np.genfromtxt('../input/240_6_rescans/Temperature_Element_at_heigt_8.28.csv', delimiter=',')
+data = np.genfromtxt('../input/amp_temp_amprin_and_HT900.csv', delimiter=',')
+
+
+
+t_input = data[:,0] # time
+T_input = data[:,1] # temperature
+
+t = np.array(t_input[0])
+
+# if a given time step is larger than min_t_step, we interpolate between the two points with min_t_step length time steps,
+# otherwise we interpolate with a time step that is 1/3 of the given time step:
+min_t_step = 100
+for i in range(1, len(t_input)):
+    if t_input[i] - t_input[i-1] > min_t_step:
+        t = np.append(t, np.arange(t_input[i-1] + min_t_step, t_input[i], min_t_step))
+    else:
+        min_t_step_c = (t_input[i]-t_input[i-1])/3 + 0.0001
+        t = np.append(t, np.arange(t_input[i-1] + min_t_step_c, t_input[i], min_t_step_c))
+
+    t = np.append(t, t_input[i])
+
+T = np.interp(t, t_input, T_input)
+
+    
+# print('Time:', t)
+# print('Temperature:', T)
+# sys.exit()
 
 #Discretize the given temperature history with smaller time steps using interpolation:
-time_step = 0.001
-t = np.arange(t[0], t[-1], time_step)
-T = np.interp(t, data[:,0], data[:,1])
+# time_step = 0.001
+# t = np.arange(t[0], t[-1], time_step)
+# T = np.interp(t, data[:,0], data[:,1])
 
 # initialize arrays:
 beta_f = np.zeros(len(t))
@@ -44,14 +75,20 @@ alpha_eq = data[:,0]
 
 # KM parameters:
 b_km = 0.005
-T_mart = 851
+T_mart = 575
 
-# Mart to alpha + beta transformation:
-T_mart_dis = 400
+# Mart to alpha + beta transformation data:
+T_mart_dis = 350
 data = np.genfromtxt('./JMAK_params_mart_to_AandB.csv', delimiter=',', skip_header=1)
 k_mart_to_AandB = data[:,0]
 n_mart_to_AandB = data[:,1]
 temp_jmak_mart_to_AandB = data[:,2]
+
+data = np.genfromtxt('./Equilibrium_mart_fraction.csv', delimiter=',', skip_header=1)
+T_mart_eq = data[:,1]
+mart_eq = data[:,0]
+
+k = 0
 
 for i in range(1, len(t)): #iterate over all time steps
 
@@ -96,12 +133,21 @@ for i in range(1, len(t)): #iterate over all time steps
             RLS[i] = 1 # keep solid state
 
             # if it is solid, we calculate phase transformations depending on heating:
-            if dT/dt >= -20.0 and dT/dt <= 0: # JMAK model alpha to beta:
-                # calculate alpha equilibrium phase fraction:
-                # alpha_eq_i = 0 # alpha equilibrium phase fractio
-                # P = [-31188.514, 170526.26, -388991.69, 471927.45, -315178.49, 99079.891, 1667.1991, -9726.8403, 1884.7280]
-                # for n in range(0, 9):
-                #     alpha_eq_i += P[n]*(T[i]/1000)**(8-n)
+
+            #data for some transformations:
+            f_mart_eq = np.interp(T[i], T_mart_eq, mart_eq)
+            # f_mart_eq = ( 1 - m.exp( -b_km*(T_mart - T[i]) ) ) * (beta_f[i-1]+mart_f[i-1])
+            beta_eq_i = 1 - np.interp(T[i], T_alpha_eq, alpha_eq)
+            alpha_eq_i = np.interp(T[i], T_alpha_eq, alpha_eq)
+
+            #in case there is no phase transformation, we keep the phase fractions the same:
+            alpha_f[i] = alpha_f[i-1]
+            beta_f[i] = beta_f[i-1]
+            mart_f[i] = mart_f[i-1]
+
+            if dT/dt > -20.0 and dT/dt < 0 and beta_f[i-1] > beta_eq_i: # JMAK model beta to alpha
+
+                # f_tot = beta_f[i-1] + alpha_f[i-1]
 
                 alpha_eq_i = np.interp(T[i], T_alpha_eq, alpha_eq)
 
@@ -111,63 +157,79 @@ for i in range(1, len(t)): #iterate over all time steps
 
                 #Calculate Tau:
                 tau = ( -1/k_i*m.log(1 - (alpha_f[i-1]/alpha_eq_i)/(beta_f[i-1]+alpha_f[i-1]) ))**(1/n_i)
+                # tau = ( -1/k * m.log( (beta_f[i-1] - beta_eq_i * f_tot) / (f_tot * (1 - beta_eq_i)) ) ) ** 1/n_i
 
                 # print('tau:',tau)
 
                 # caculate change in alpha phase fraction:
                 alpha_f[i] = (1 - m.exp(-k_i * (tau+dt)**n_i)) * alpha_eq_i * (beta_f[i-1]+alpha_f[i-1])
+                # beta_f[i] = f_tot*(1 - (1 - m.exp(-k_i * (tau+dt)**n_i)) * (1 - beta_eq_i))
 
                 # calculate change in beta phase fraction:
-                beta_f[i] = 1 - alpha_f[i]
+                
+                # alpha_f[i] = f_tot - beta_f[i]
+                beta_f[i] = beta_f[i-1] - (alpha_f[i] - alpha_f[i-1])
                 mart_f[i] = mart_f[i-1]
 
-            if dT/dt <= -410.0 and mart_f[i-1] <= 1 and T[i] < T_mart: # KM model beta to martensite fast cooling:
-                
+            elif dT/dt <= -410.0 and beta_f[i-1] > beta_eq_i and T[i] < T_mart: # KM model beta to martensite fast cooling:
+                              
                 mart_f[i] = ( 1 - m.exp( -b_km*(T_mart - T[i]) ) ) * (beta_f[i-1]+mart_f[i-1])
                 beta_f[i] = beta_f[i-1] - (mart_f[i] - mart_f[i-1])
                 alpha_f[i] = alpha_f[i-1]
 
-            elif (dT/dt > -410.0) and dT/dt <= -20.0 and mart_f[i-1] <= 1 and T[i] < T_mart: # KM model beta to martensite slow cooling:
-                
-                beta_eq_i = 1 - np.interp(T[i], T_alpha_eq, alpha_eq)
+            elif dT/dt > -410.0 and dT/dt <= -20.0 and beta_f[i-1] > beta_eq_i and T[i] < T_mart: # KM model beta to martensite slow cooling:
 
                 mart_f[i] = ( 1 - m.exp( -b_km*(T_mart - T[i]) ) ) * (beta_f[i-1]+mart_f[i-1]-beta_eq_i)
                 beta_f[i] = beta_f[i-1] - (mart_f[i] - mart_f[i-1])
                 alpha_f[i] = alpha_f[i-1]
 
-            # elif (dT/dt >= -0.0001 and T[i] >= T_mart_dis): # JMAK model of mart to alpha + beta transformation:
+            elif (dT/dt >= 0): 
                 
-            #     # linearly interpolate JMAK parameters k_i and n_i according to current temperature:
-            #     k_mart_i = np.interp(T[i], temp_jmak_mart_to_AandB, k_mart_to_AandB)
-            #     n_mart_i = np.interp(T[i], temp_jmak_mart_to_AandB, n_mart_to_AandB)
+                if mart_f[i-1] > f_mart_eq and T[i] > T_mart_dis: # JMAK model of mart to alpha + beta transformation:
 
-            #     #Calculate Tau:
-            #     tau_mart_i = ( -1/k_mart_i * m.log( (mart_f[i-1] - f_mart_eq) / (1 - f_mart_eq) )) ** (1/n_mart_i)
+                    # linearly interpolate JMAK parameters k_i and n_i according to current temperature:
+                    k_mart_i = np.interp(T[i], temp_jmak_mart_to_AandB, k_mart_to_AandB)
+                    n_mart_i = np.interp(T[i], temp_jmak_mart_to_AandB, n_mart_to_AandB)
 
-            #     f_mart_eq = 0.5 * (1 - m.tanh( (450 - T[i]) / 80 ))
+                    #Calculate Tau:
+                    tau_mart_i = ( -1/k_mart_i * m.log( (mart_f[i-1] - f_mart_eq) / (1-f_mart_eq) )) ** (1/n_mart_i)
+                    # tau_mart_i = (-1/k_mart_i * m.log(1 - (mart_f[i-1] - f_mart_eq)/(1- alpha_f[i-1] - f_mart_eq)) )**(1/n_mart_i)
 
-            #     # mart_f[i] = 1 - (1 - m.exp(-k_mart_i*(tau_mart_i+dt)**n_mart_i)) * (1 - f_mart_eq)
-            #     mart_f[i] = f_mart_eq - ( m.exp( -k_mart_i ( tau_mart_i +dt  )**n_mart_i) ) * (mart_f[i-1] + beta_f[i-1] - f_mart_eq)
+                    mart_f_inter = 1 - (1 - m.exp(-k_mart_i*(tau_mart_i+dt)**n_mart_i)) * (1 - f_mart_eq)
+                    # mart_f_inter = f_mart_eq - ( m.exp( -k_mart_i * ( tau_mart_i + dt )**n_mart_i) ) * (mart_f[i-1] + beta_f[i-1] - f_mart_eq)
 
-            #     alpha_f[i] = alpha_f[i-1] + (mart_f[i-1] - mart_f[i])*f_mart_eq
-            #     beta_f[i] = beta_f[i-1] + (mart_f[i-1] - mart_f[i])*(1 - f_mart_eq)
+                    alpha_f_inter = alpha_f[i-1] + (mart_f[i-1] - mart_f_inter) * alpha_eq_i
+                    beta_f_inter = beta_f[i-1] + (mart_f[i-1] - mart_f_inter) * beta_eq_i
+                
+                else:
+                    mart_f_inter = mart_f[i-1]
+                    alpha_f_inter = alpha_f[i-1]
+                    beta_f_inter = beta_f[i-1]
 
-            else: # if no phase transfpormation happens, they stay the same
 
-                alpha_f[i] = alpha_f[i-1]
-                beta_f[i] = beta_f[i-1]
-                mart_f[i] = mart_f[i-1]
+                if beta_f_inter <= beta_eq_i and (alpha_f_inter + mart_f_inter) >= 0.001: #Parabolic growth of alpha to beta transformation
+                    
+                    f_diss = 2.2 * (10**-31) * ((T[i] + 273) **9.89)
+                    t_star = (beta_f[i-1]/ (beta_eq_i*f_diss))**2
+                    t_crit = f_diss ** -2
 
-        # if dT/dt <= -410.0:
-        #     # KM model beta to martensite:
-        #     mart_f[i] = (1 - m.exp(-b_km*(T_mart-T[i])))*(beta_f[i-1]+mart_f[i-1])
-        #     beta_f[i] = beta_f[i-1] - mart_f[i]
+                    if 0 < dt + t_star and dt + t_star < t_crit:
+                        alpha_final = 1 - beta_eq_i * f_diss * m.sqrt(dt + t_star)
+                    elif dt + t_star >= t_crit:
+                        alpha_final = 1 - beta_eq_i
 
-        # if dT/dt < -20.0 and dT/dt >= -410.0:
-        #     # KM model beta to martensite:
-        #     mart_f[i] = (1 - m.exp(-b_km*(T_mart-T[i])))*(beta_f[i-1]+mart_f[i-1])
-        #     beta_f[i] = beta_f[i-1] - mart_f[i]
+                    alpha_inc = alpha_final - (alpha_f_inter + mart_f_inter)
+                    beta_inc = -alpha_inc
 
+                    alpha_f[i] = alpha_inc * alpha_f_inter / (alpha_f_inter + mart_f_inter) + alpha_f_inter
+                    mart_f[i] = alpha_inc * mart_f_inter / (alpha_f_inter + mart_f_inter) + mart_f_inter
+                    beta_f[i] = beta_f_inter + beta_inc
+
+                else:
+                    alpha_f[i] = alpha_f_inter
+                    beta_f[i] = beta_f_inter
+                    mart_f[i] = mart_f_inter
+ 
 # End of time-series iteration
 
 # Plots:
@@ -202,6 +264,7 @@ ax2.plot(t, alpha_f, 'r-')
 ax2.plot(t, beta_f, 'r--')
 ax2.plot(t, mart_f, 'r:')
 ax2.set_ylabel('Phase Fraction', color='r')
+ax2.set_ylim(0, 1)
 ax2.tick_params('y', colors='r')
 
 ax1.legend(['Temperature'], loc='upper left')
@@ -209,6 +272,26 @@ ax2.legend(['Alpha', 'Beta', 'Mart'], loc='upper right')
 
 fig.tight_layout()
 plt.savefig('phase_fractions.png')
+
+
+#plot only alpha and beta
+plt.figure()
+fig, ax1 = plt.subplots()
+ax1.plot(t, T, 'b-')
+ax1.set_xlabel('time (s)')
+ax1.set_ylabel('Temperature (°C)', color='b')
+ax1.tick_params('y', colors='b')
+
+ax2 = ax1.twinx()
+ax2.plot(t, alpha_f + mart_f, 'r-')
+ax2.set_ylabel('Phase Fraction', color='r')
+ax2.tick_params('y', colors='r')
+ax2.set_ylim(0, 1)
+ax1.legend(['Temperature'], loc='upper left')
+ax2.legend(['Alpha'], loc='upper right')
+
+fig.tight_layout()
+plt.savefig('only_alpha.png')
 
 
 # # plot this function: alpha_eq_i += P[n]*(T[i]/1000)**(8-n)
