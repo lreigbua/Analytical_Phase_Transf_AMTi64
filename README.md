@@ -1,5 +1,7 @@
 # Analytical Microstructure Evolution Model of Ti64 during Additive Manufacturing
 
+This model reads a temperature history csv file and calculates the microstructure evolution in terms of phase fractions and lath thicknesses for each time increment.
+
 ## Flow-Chart
 
 ![FLow-chart_MEM](https://github.com/lreigbua/Structure_Model_Abaqus/assets/93150422/3ef10158-58e6-496d-acfa-3bead2cd4fb7)
@@ -16,6 +18,3 @@ cd Analytical_Phase_Transf_AMTi64/examples
 #Run python script
 python example.py
 ```
-
-## Outputs:
-
