@@ -8,14 +8,14 @@
 
 ```bash
 # Download repository
-git clone https://github.com/lreigbua/Refined_Thermal_FEA_Additive.git
+git clone https://github.com/lreigbua/Analytical_Phase_Transf_AMTi64.git
 
 #Go to example folder
-cd Refined_Thermal_FEA_Additive/examples/cube_1mm
+cd Analytical_Phase_Transf_AMTi64/examples
 
 #Run python script
-python run_1mm_cube.py
+python example.py
 ```
 
-##Outputs:
+## Outputs:
 
