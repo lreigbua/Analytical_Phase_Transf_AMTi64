@@ -104,7 +104,7 @@ def Run(input_csv, data_folder, output_json = ""):
     # R = 350
 
     Q = 97000
-    k0 = 20
+    k0 = 19
     c = 3
     t_lath_0 = 0.25
     Rg = 8.314
@@ -130,7 +130,7 @@ def Run(input_csv, data_folder, output_json = ""):
     T_mart = 851
 
     # Mart to alpha + beta transformation data:
-    T_mart_dis = 500
+    T_mart_dis = 400
     data = np.genfromtxt('./JMAK_params_mart_to_AandB.csv', delimiter=',', skip_header=1)
     k_mart_to_AandB = data[:,0]
     n_mart_to_AandB = data[:,1]
@@ -258,19 +258,20 @@ def Run(input_csv, data_folder, output_json = ""):
 
 
                 ## Beta to Martensite Zhang:
-                if dT/dt <=-20 and T[i] < T_mart:
-                
+                if dT/dt <=-20 and T[i] < T_mart :
+
                     if mart_trans_started_flag == False: #if start of cooling cycle
                         mart_trans_started_flag = True
 
                         f_p_T0 = beta_f[i-1]
                         f_c_T0 = mart_f[i-1]
 
-                        if f_p_T0 < 0.25:
+                        if f_p_T0 < 0.1:
                             f_beta_r = f_p_T0
                         else:
-                            f_beta_r = 0.25 * ( 1 - f_p_T0)
-
+                            f_beta_r = 0.1 * ( 1 - f_p_T0)
+                    
+                    # f_beta_r = 0
                     if f_p_T0 > f_beta_r:
 
                         mart_f[i] = ( mart_f[i-1] - b_km * (T[i]-T[i-1]) * ( f_p_T0 - f_beta_r + f_c_T0) )/ ( 1 - b_km * (T[i]-T[i-1]) )
@@ -306,7 +307,8 @@ def Run(input_csv, data_folder, output_json = ""):
                         beta_f_inter = beta_f[i-1]
 
 
-                    if beta_f[i-1] < beta_eq_i and (alpha_f_inter + mart_f_inter) >= 0.001: #Parabolic growth of alpha to beta transformation
+                    if beta_f_inter < (beta_eq_i*(beta_f_inter+alpha_f_inter)) + 0.00001 and (alpha_f_inter + mart_f_inter) >= 0.001: #Parabolic growth of alpha to beta transformation
+                    # if beta_f[i-1] < beta_eq_i and (alpha_f_inter + mart_f_inter) >= 0.001: #Parabolic growth of alpha to beta transformation
                         
 
                         f_diss = 2.2 * (10**-31) * ((T[i] + 273) **9.89)
@@ -356,6 +358,8 @@ def Run(input_csv, data_folder, output_json = ""):
                     t_lath[i] = t_lath_0
 
     # End of time-series iteration
+
+
 
     os.chdir(user_path)
 
