@@ -3,6 +3,11 @@ sys.path.insert(0, '../')
 import Analytical_Phase_Transf_AMTi64
 
 
-Analytical_Phase_Transf_AMTi64.Run(input_csv = "./Inputs/amp_temp_amprint.txt",
-                                data_folder = "./output",
-                                 output_json = f"output.json")
+final_microstructure_dict = Analytical_Phase_Transf_AMTi64.Run(input_csv = "./Inputs/amp_temp_amprint.txt",
+                                 data_folder = "./output",
+                                 create_output_json = True,
+                                 create_output_CSVs = True,
+                                 create_plots = True
+                                 )
+
+print(final_microstructure_dict)

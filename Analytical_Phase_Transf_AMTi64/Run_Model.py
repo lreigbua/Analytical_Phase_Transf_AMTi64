@@ -5,8 +5,9 @@ import math as m
 from pathlib import Path
 import os
 import sys
+import json
 
-def Run(input_csv, data_folder, output_json = ""):
+def Run(input_csv, data_folder, create_output_json = True, create_plots = True, create_output_CSVs = True):
 
     user_path = Path.cwd()
 
@@ -359,6 +360,12 @@ def Run(input_csv, data_folder, output_json = ""):
 
     # End of time-series iteration
 
+    output_dict = {}
+    output_dict["final_alpha_f"] = alpha_f[-1]
+    output_dict["final_beta_f"] = beta_f[-1]
+    output_dict["final_mart_f"] = mart_f[-1]
+    output_dict["t_lath"] = t_lath[-1]
+
 
 
     os.chdir(user_path)
@@ -372,86 +379,97 @@ def Run(input_csv, data_folder, output_json = ""):
     if not output_dir.exists():
         output_dir.mkdir()
 
+    if create_output_json == True:
+
+        output_dict_path = output_dir / "output.json"
+        with open(output_dict_path, 'w') as json_file:
+            json.dump(output_dict, json_file)
+
+    if create_plots:
 
 
 
-    fontsize = 20
+        fontsize = 20
 
-    # Print temperature:
-    plt.figure()
-    plt.plot(t, T)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Temperature (C)')
-    plt.title('Temperature vs Time')
-    plt.savefig('temp_vs_time.png')
-
-
-    #plot RSL vs temperature:
-    plt.figure()
-    plt.plot(t, RLS)
-    plt.xlabel('Time (s)')
-    plt.ylabel('RLS')
-    plt.title('RLS vs Time')
-    plt.savefig('RLS_vs_time.png')
-
-    #plot graph with two lines, with one of them having their values represented on the right axis and the other on the left axis:
-    plt.figure()
-    plt.rcParams['font.size'] = fontsize    
-
-    fig, ax1 = plt.subplots()
-    ax1.plot(t, T, 'b-')
-    ax1.set_xlabel('time (s)')
-    ax1.set_ylabel('Temperature (°C)', color='b')
-    ax1.set_ylim(0, 1500)
-    # ax1.set_xlim(0, 300)
-    ax1.tick_params('y', colors='b')
-    ax1.legend(["T"], loc='upper left')
-
-    ax2 = ax1.twinx()
-    ax2.plot(t, alpha_f, 'r--')
-    ax2.plot(t, beta_f, 'k-.')
-    ax2.plot(t, mart_f, 'g:')
-    ax2.set_ylabel('Phase Fraction')
-    ax2.set_ylim(0, 1)
-    ax2.tick_params('y')
+        # Print temperature:
+        plt.figure()
+        plt.plot(t, T)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Temperature (C)')
+        plt.title('Temperature vs Time')
+        plt.savefig('temp_vs_time.png')
 
 
-    ax2.legend(['$f_{\\alpha}$', '$f_{\\beta}$', "$f_{\\alpha '} $"], loc='upper right')
+        #plot RSL vs temperature:
+        plt.figure()
+        plt.plot(t, RLS)
+        plt.xlabel('Time (s)')
+        plt.ylabel('RLS')
+        plt.title('RLS vs Time')
+        plt.savefig('RLS_vs_time.png')
 
-    fig.tight_layout()
-    plt.savefig(output_dir / 'Phase_Fractions.png')
+        #plot graph with two lines, with one of them having their values represented on the right axis and the other on the left axis:
+        plt.figure()
+        plt.rcParams['font.size'] = fontsize    
 
-    np.savetxt(output_dir / "Alpha_Fraction.csv", np.column_stack((t, alpha_f)), delimiter=',', header='Time (s), Alpha Fraction')
-    np.savetxt(output_dir / "Beta_Fraction.csv", np.column_stack((t, beta_f)), delimiter=',', header='Time (s), Beta Fraction')
-    np.savetxt(output_dir / "Martensite_Fraction.csv", np.column_stack((t, beta_f)), delimiter=',', header='Time (s), Martensite Fraction')
+        fig, ax1 = plt.subplots()
+        ax1.plot(t, T, 'b-')
+        ax1.set_xlabel('time (s)')
+        ax1.set_ylabel('Temperature (°C)', color='b')
+        ax1.set_ylim(0, 1500)
+        # ax1.set_xlim(0, 300)
+        ax1.tick_params('y', colors='b')
+        ax1.legend(["T"], loc='upper left')
+
+        ax2 = ax1.twinx()
+        ax2.plot(t, alpha_f, 'r--')
+        ax2.plot(t, beta_f, 'k-.')
+        ax2.plot(t, mart_f, 'g:')
+        ax2.set_ylabel('Phase Fraction')
+        ax2.set_ylim(0, 1)
+        ax2.tick_params('y')
 
 
+        ax2.legend(['$f_{\\alpha}$', '$f_{\\beta}$', "$f_{\\alpha '} $"], loc='upper right')
 
-    #plot lath thickness
-    plt.figure()
-    #increase size of fonts:
-    plt.rcParams['font.size'] = fontsize
+        fig.tight_layout()
+        plt.savefig(output_dir / 'Phase_Fractions.png')
 
-    fig, ax1 = plt.subplots()
-    ax1.plot(t, T, 'b')
-    # ax1.set_xlim(0, 100)
-    ax1.set_ylim(0, 1800)
-    ax1.set_xlabel('time (s)')
-    ax1.set_ylabel('Temperature (°C)', color='b')
-    ax1.tick_params('y', colors='b')
 
-    ax2 = ax1.twinx()
-    ax2.plot(t, t_lath, 'r-')
-    # ax2.plot(t, alpha_f + mart_f, 'r--')
-    ax2.set_ylabel('Lath thickness ($\\mu m$)', color='r')
-    ax2.tick_params('y', colors='r')
-    ax2.set_ylim(0, 1.5)
+        #plot lath thickness
+        plt.figure()
+        #increase size of fonts:
+        plt.rcParams['font.size'] = fontsize
 
-    fig.tight_layout()
-    plt.savefig(output_dir / 'Lath_thickness.png')
+        fig, ax1 = plt.subplots()
+        ax1.plot(t, T, 'b')
+        # ax1.set_xlim(0, 100)
+        ax1.set_ylim(0, 1800)
+        ax1.set_xlabel('time (s)')
+        ax1.set_ylabel('Temperature (°C)', color='b')
+        ax1.tick_params('y', colors='b')
 
-    np.savetxt(output_dir / "Martensite_Fraction.csv", np.column_stack((t, t_lath)), delimiter=',', header='Time (s), Lath thickness (um)')
+        ax2 = ax1.twinx()
+        ax2.plot(t, t_lath, 'r-')
+        # ax2.plot(t, alpha_f + mart_f, 'r--')
+        ax2.set_ylabel('Lath thickness ($\\mu m$)', color='r')
+        ax2.tick_params('y', colors='r')
+        ax2.set_ylim(0, 1.5)
 
+        fig.tight_layout()
+        plt.savefig(output_dir / 'Lath_thickness.png')
+
+        
+
+
+    
+    if create_output_CSVs:
+        np.savetxt(output_dir / "Alpha_Fraction.csv", np.column_stack((t, alpha_f)), delimiter=',', header='Time (s), Alpha Fraction')
+        np.savetxt(output_dir / "Beta_Fraction.csv", np.column_stack((t, beta_f)), delimiter=',', header='Time (s), Beta Fraction')
+        np.savetxt(output_dir / "Martensite_Fraction.csv", np.column_stack((t, beta_f)), delimiter=',', header='Time (s), Martensite Fraction')
+        np.savetxt(output_dir / "Lath_thickness.csv", np.column_stack((t, t_lath)), delimiter=',', header='Time (s), Lath thickness (um)')
+
+           
 
     #Compare with XRD data:
     
@@ -512,12 +530,17 @@ def Run(input_csv, data_folder, output_json = ""):
     # save t, alpha_f, beta_f, mart_f, RLS, t_lath to separate file with time:
     # np.savetxt('alpha.csv', np.column_stack((t, T, alpha_f)), delimiter=',')
 
-    # Print final phase fractions:
-    print('Final phase fractions:')
-    print('Alpha:', alpha_f[-1])
-    print('Beta:', beta_f[-1])
-    print('Martensite:', mart_f[-1])
-    print('Lath thickness (um):', t_lath[-1])
+
+    return output_dict
+
+    # # Print final phase fractions:
+    # print('Final phase fractions:')
+    # print('Alpha:', alpha_f[-1])
+    # print('Beta:', beta_f[-1])
+    # print('Martensite:', mart_f[-1])
+    # print('Lath thickness (um):', t_lath[-1])
+
+
 
 
 
