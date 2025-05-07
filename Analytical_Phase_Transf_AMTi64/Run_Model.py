@@ -7,7 +7,7 @@ import os
 import sys
 import json
 
-def Run(input_csv, data_folder, create_output_json = True, create_plots = True, create_output_CSVs = True):
+def Run(input_csv, data_folder, Output_Json = None, create_plots = True, create_output_CSVs = True):
 
     user_path = Path.cwd()
 
@@ -379,9 +379,9 @@ def Run(input_csv, data_folder, create_output_json = True, create_plots = True, 
     if not output_dir.exists():
         output_dir.mkdir()
 
-    if create_output_json == True:
+    if Output_Json is not None:
 
-        output_dict_path = output_dir / "output.json"
+        output_dict_path = output_dir / Path(Output_Json)
         with open(output_dict_path, 'w') as json_file:
             json.dump(output_dict, json_file)
 
