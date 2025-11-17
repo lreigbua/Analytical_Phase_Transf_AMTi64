@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, '../')
 import Analytical_Phase_Transf_AMTi64
 
 
