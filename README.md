@@ -13,11 +13,13 @@ This code reads a temperature history csv file and calculates the microstructure
 ## How to run example
 
 ```bash
-# Download repository
+# Download repository and build
 git clone https://github.com/lreigbua/Analytical_Phase_Transf_AMTi64.git
+cd Analytical_Phase_Transf_AMTi64
+pip install -e .
 
 #Go to example folder
-cd Analytical_Phase_Transf_AMTi64/examples
+cd examples
 
 #Run python script
 python example.py
