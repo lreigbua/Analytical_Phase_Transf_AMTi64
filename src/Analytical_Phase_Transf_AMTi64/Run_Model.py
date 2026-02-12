@@ -230,7 +230,7 @@ def Run(input_csv, data_folder, Output_Json = None, create_plots = True, create_
 
                     #Calculate Tau:
                     tau = ( -1/k_i*m.log(1 - (alpha_f[i-1]/alpha_eq_i)/(beta_f[i-1]+alpha_f[i-1]) ))**(1/n_i)
-                    # tau = ( -1/k * m.log( (beta_f[i-1] - beta_eq_i * f_tot) / (f_tot * (1 - beta_eq_i)) ) ) ** 1/n_i
+                    # tau = ( -1/k * m.log( (beta_f[i-1] - beta_eq_i * f_tot) / (f_tot * (1 - beta_eq_i)) ) ) ** (1/n_i)
 
                     # print('tau:',tau)
 
